@@ -42,7 +42,7 @@ The rate limiter operates at the **network layer**, intercepting connections bef
 | OS         | Linux (WSL2 for dev) |
 | Networking | POSIX sockets        |
 | Algorithm  | Fixed Window Counter |
-| Container  | Docker (planned)     |
+| Container  | Docker               |
 | Cloud      | AWS EC2 (planned)    |
 
 ---
@@ -50,12 +50,13 @@ The rate limiter operates at the **network layer**, intercepting connections bef
 ## ✨ Features
 
 * TCP server implemented using Linux sockets
-* HTTP request parsing
+* HTTP request handling
 * IP-based client identification
 * Fixed-window rate limiting (5 requests per 60 seconds)
 * HTTP 429 enforcement
 * Graceful socket handling
 * Memory-safe IP tracking with TTL eviction
+* Dockerized deployment
 * Request logging
 
 ---
@@ -105,6 +106,42 @@ To prevent unbounded memory growth:
 * Cleanup runs every 30 requests
 
 This mimics TTL-based eviction used in production systems.
+
+---
+
+## 🐳 Run with Docker
+
+```bash
+# Build image
+docker build -t cpp-rate-limiter .
+
+# Run container
+docker run -p 8080:8080 cpp-rate-limiter
+```
+
+Test:
+
+```bash
+for i in {1..7}; do curl -s http://localhost:8080; echo; done
+```
+
+---
+
+## 🧪 Run Locally (Without Docker)
+
+```bash
+# Compile
+g++ server.cpp -o server
+
+# Run
+./server
+```
+
+Test:
+
+```bash
+for i in {1..7}; do curl -s http://localhost:8080; echo; done
+```
 
 ---
 
@@ -159,21 +196,14 @@ This mimics TTL-based eviction used in production systems.
 
 ---
 
-## 🧪 How to Run
+### Phase 5 — Dockerization
 
-```bash
-# Compile
-g++ server.cpp -o server
+* Packaged middleware as a Docker container
+* Enabled consistent deployment across environments
+* Verified host ↔ container networking
+* Preserved rate limiting behavior inside container
 
-# Run
-./server
-```
-
-Test:
-
-```bash
-for i in {1..7}; do curl http://localhost:8080; done
-```
+**Outcome:** Portable, deployment-ready service
 
 ---
 
@@ -185,12 +215,12 @@ for i in {1..7}; do curl http://localhost:8080; done
 * HTTP 429 blocking
 * TTL-based memory safety
 * Graceful socket handling
+* Dockerized deployment
 
 ---
 
 ## 🔮 Roadmap
 
-* Docker containerization
 * Config file support
 * Thread safety
 * Token bucket algorithm
@@ -200,8 +230,9 @@ for i in {1..7}; do curl http://localhost:8080; done
 
 ## 🎤 Interview Pitch (60-Second Version)
 
-> "I built a C++ rate limiting middleware that sits in front of backend services to protect them from abusive traffic. It listens for incoming TCP connections, extracts the source IP, and enforces a fixed-window rate limit. If a client exceeds the limit, it returns an HTTP 429 response and terminates the connection early to save resources. I also implemented TTL-based eviction to prevent memory growth from inactive IPs. I developed it on Linux using POSIX sockets and designed it to be Docker- and cloud-ready."
+> "I built a C++ rate limiting middleware that sits in front of backend services to protect them from abusive traffic. It listens for incoming TCP connections, extracts the source IP, and enforces a fixed-window rate limit. If a client exceeds the limit, it returns an HTTP 429 response and terminates the connection early to save resources. I also implemented TTL-based eviction to prevent memory growth from inactive IPs. The system is Dockerized for portable deployment and designed to be cloud-ready."
 
 ---
 
 *End of README*
+
