@@ -12,15 +12,15 @@
 struct RateData {
     int count = 0;
     time_t window_start = 0;
-    time_t last_seen = 0;   // for memory cleanup
+    time_t last_seen = 0;
 };
 
 std::unordered_map<std::string, RateData> rate_map;
 
-const int LIMIT = 5;              // max requests
-const int WINDOW = 60;            // per 60 seconds
-const int CLEANUP_TTL = 300;      // remove IPs inactive for 5 minutes
-const int CLEANUP_INTERVAL = 30;  // run cleanup every 30 requests
+const int LIMIT = 5;
+const int WINDOW = 60;
+const int CLEANUP_TTL = 300;
+const int CLEANUP_INTERVAL = 30;
 
 int request_counter = 0;
 
@@ -44,7 +44,6 @@ void cleanup_old_ips() {
 // Main Server
 // --------------------
 int main() {
-    // 1. Create socket
     int server_fd = socket(AF_INET, SOCK_STREAM, 0);
 
     if (server_fd < 0) {
@@ -52,7 +51,6 @@ int main() {
         return 1;
     }
 
-    // 2. Bind to IP + port
     sockaddr_in address{};
     address.sin_family = AF_INET;
     address.sin_addr.s_addr = INADDR_ANY;
@@ -66,7 +64,6 @@ int main() {
         return 1;
     }
 
-    // 3. Start listening
     if (listen(server_fd, 10) < 0) {
         std::cerr << "Listen failed\n";
         return 1;
@@ -75,7 +72,6 @@ int main() {
     std::cout << "Rate Limiter running on port 8080\n";
 
     while (true) {
-        // 4. Accept client + capture IP
         sockaddr_in client_addr{};
         socklen_t client_len = sizeof(client_addr);
 
@@ -89,14 +85,53 @@ int main() {
         inet_ntop(AF_INET, &client_addr.sin_addr, ip_str, INET_ADDRSTRLEN);
         std::string client_ip(ip_str);
 
-        // --------------------
-        // RATE LIMIT LOGIC
-        // --------------------
         time_t now = time(NULL);
         auto &data = rate_map[client_ip];
 
-        data.last_seen = now;   // update activity time
+        data.last_seen = now;
         request_counter++;
 
-        if (data.window_start == 0 || now - data.wind_
+        if (data.window_start == 0 || now - data.window_start > WINDOW) {
+            data.count = 0;
+            data.window_start = now;
+        }
+
+        data.count++;
+
+        if (request_counter % CLEANUP_INTERVAL == 0) {
+            cleanup_old_ips();
+        }
+
+        if (data.count > LIMIT) {
+            std::cout << "BLOCKED IP: " << client_ip << "\n";
+
+            const char* blocked =
+                "HTTP/1.1 429 Too Many Requests\n"
+                "Content-Type: text/plain\n\n"
+                "Too many requests. Try later.\n";
+
+            send(client_socket, blocked, strlen(blocked), 0);
+            usleep(50000);
+            close(client_socket);
+            continue;
+        }
+
+        char buffer[1024] = {0};
+        read(client_socket, buffer, 1024);
+
+        std::cout << "ALLOWED IP: " << client_ip << "\n";
+
+        const char* response =
+            "HTTP/1.1 200 OK\n"
+            "Content-Type: text/plain\n\n"
+            "Request allowed\n";
+
+        send(client_socket, response, strlen(response), 0);
+        usleep(50000);
+        close(client_socket);
+    }
+
+    close(server_fd);
+    return 0;
+}
 
