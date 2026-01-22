@@ -228,11 +228,5 @@ for i in {1..7}; do curl -s http://localhost:8080; echo; done
 
 ---
 
-## 🎤 Interview Pitch (60-Second Version)
-
-> "I built a C++ rate limiting middleware that sits in front of backend services to protect them from abusive traffic. It listens for incoming TCP connections, extracts the source IP, and enforces a fixed-window rate limit. If a client exceeds the limit, it returns an HTTP 429 response and terminates the connection early to save resources. I also implemented TTL-based eviction to prevent memory growth from inactive IPs. The system is Dockerized for portable deployment and designed to be cloud-ready."
-
----
-
 *End of README*
 
