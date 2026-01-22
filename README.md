@@ -95,6 +95,14 @@ The rate limiter operates at the **network layer**, intercepting connections bef
 6. Otherwise → request forwarded (simulated)
 7. Connection closed gracefully
 
+## 📸 Screenshots
+
+### Rate Limiting in Action (Client View)
+![Rate Limiting](screenshots/rate-limit-block.png)
+
+### Server Logs (Backend View)
+![Server Logs](screenshots/server-logs.png)
+
 ---
 
 ## 🛡️ Memory Safety
